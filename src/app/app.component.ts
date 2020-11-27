@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
+import { MinMaxGUIHelper } from './Helpers/helpers.js';
 
 @Component({
   selector: 'app-root',
@@ -74,6 +75,10 @@ export class AppComponent implements OnInit {
     planeMesh.rotation.x = Math.PI * -.5;
     this.scene.add(planeMesh);
 
+    const updateCamera = () => {
+      this.camera.updateProjectionMatrix();
+    }
+
     const color = 0xFFFFFF
     const intensity = 1;
     const light = new THREE.DirectionalLight(color, intensity);
@@ -81,6 +86,12 @@ export class AppComponent implements OnInit {
     light.target.position.set(-5, 0, 0);
     this.scene.add(light);
     this.scene.add(light.target);
+
+    const gui = new dat.GUI();
+    gui.add(this.camera, 'fov', 1, 180).onChange(updateCamera);
+    const minMaxHelper = new MinMaxGUIHelper(this.camera, 'near', 'far', .1);
+    gui.add(minMaxHelper, 'min', .1, 50, .1).name('near').onChange(updateCamera);
+    gui.add(minMaxHelper, 'max', .1, 50, .1).name('far').onChange(updateCamera);
 
     const animate = () => {
 
@@ -90,9 +101,5 @@ export class AppComponent implements OnInit {
       requestAnimationFrame(animate)
     }
     requestAnimationFrame(animate);
-  }
-
-  private updateCamera() {
-    this.camera.updateProjectionMatrix();
   }
 }
