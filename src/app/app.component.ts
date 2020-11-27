@@ -13,9 +13,10 @@ export class AppComponent implements OnInit {
 
   public scene = new THREE.Scene();
   public renderer = new THREE.WebGLRenderer({
-    antialias: true
+    antialias: true,
+    logarithmicDepthBuffer: true
   });
-  public camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 100);
+  public camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 5, 50);
   public cameraHelper = new THREE.CameraHelper(this.camera);
   public textureLoader = new THREE.TextureLoader();
 
@@ -37,6 +38,7 @@ export class AppComponent implements OnInit {
     controls.target.set(0, 5, 0);
     controls.update();
 
+    this.camera.zoom = .2;
     this.camera.position.set(0, 10, 20);
 
     const camera2 = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, .1, 500);
@@ -90,9 +92,9 @@ export class AppComponent implements OnInit {
     planeMesh.rotation.x = Math.PI * -.5;
     this.scene.add(planeMesh);
 
-    const updateCamera = () => {
-      this.camera.updateProjectionMatrix();
-    }
+    // const updateCamera = () => {
+    //   this.camera.updateProjectionMatrix();
+    // }
 
     const color = 0xFFFFFF
     const intensity = 1;
@@ -103,10 +105,13 @@ export class AppComponent implements OnInit {
     this.scene.add(light.target);
 
     const gui = new dat.GUI();
-    gui.add(this.camera, 'fov', 1, 180).onChange(updateCamera);
+    // gui.add(this.camera, 'fov', 1, 180).onChange(updateCamera);
+    gui.add(this.camera, 'zoom', .01, 1, .01).listen();
     const minMaxHelper = new MinMaxGUIHelper(this.camera, 'near', 'far', .1);
-    gui.add(minMaxHelper, 'min', .1, 50, .1).name('near').onChange(updateCamera);
-    gui.add(minMaxHelper, 'max', .1, 50, .1).name('far').onChange(updateCamera);
+    gui.add(minMaxHelper, 'min', .00001, 50, .1).name('near');
+    gui.add(minMaxHelper, 'max', .1, 50, .1).name('far');
+    // gui.add(minMaxHelper, 'min', .1, 50, .1).name('near').onChange(updateCamera);
+    // gui.add(minMaxHelper, 'max', .1, 50, .1).name('far').onChange(updateCamera);
 
     const animate = () => {
 
@@ -118,7 +123,8 @@ export class AppComponent implements OnInit {
         const aspect = this.setScissorForElem(view1Elem);
 
         // adjust the camera for this aspect
-        this.camera.aspect = aspect;
+        this.camera.left = -aspect;
+        this.camera.right = aspect;
         this.camera.updateProjectionMatrix();
         this.cameraHelper.update();
 
