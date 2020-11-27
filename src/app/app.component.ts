@@ -17,6 +17,7 @@ export class AppComponent implements OnInit {
     logarithmicDepthBuffer: true
   });
   public camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 5, 50);
+  // public camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 100);
   public cameraHelper = new THREE.CameraHelper(this.camera);
   public textureLoader = new THREE.TextureLoader();
 
