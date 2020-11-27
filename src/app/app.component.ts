@@ -16,6 +16,7 @@ export class AppComponent implements OnInit {
     antialias: true
   });
   public camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 100);
+  public cameraHelper = new THREE.CameraHelper(this.camera);
   public textureLoader = new THREE.TextureLoader();
   public controls = new OrbitControls(this.camera, this.renderer.domElement);
 
