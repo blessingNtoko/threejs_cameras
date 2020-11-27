@@ -18,7 +18,6 @@ export class AppComponent implements OnInit {
   public camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 100);
   public cameraHelper = new THREE.CameraHelper(this.camera);
   public textureLoader = new THREE.TextureLoader();
-  public controls = new OrbitControls(this.camera, this.renderer.domElement);
 
   ngOnInit() {
     this.init();
@@ -28,10 +27,25 @@ export class AppComponent implements OnInit {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
-    this.controls.target.set(0, 5, 0);
-    this.controls.update();
+    this.scene.add(this.cameraHelper);
+
+    const view1Elem: any = document.querySelector('#view1');
+    const view2Elem: any = document.querySelector('#view2');
+
+    const controls = new OrbitControls(this.camera, view1Elem);
+
+    controls.target.set(0, 5, 0);
+    controls.update();
 
     this.camera.position.set(0, 10, 20);
+
+    const camera2 = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, .1, 500);
+    camera2.position.set(40, 10, 30);
+    camera2.lookAt(0, 5, 0);
+
+    const controls2 = new OrbitControls(camera2, view2Elem);
+    controls2.target.set(0, 5, 0);
+    controls2.update();
 
     const planeSize = 40;
 
@@ -96,11 +110,72 @@ export class AppComponent implements OnInit {
 
     const animate = () => {
 
-      this.controls.update();
+      // turn on scissor
+      this.renderer.setScissorTest(true);
 
-      this.renderer.render(this.scene, this.camera);
+      // render original view
+      {
+        const aspect = this.setScissorForElem(view1Elem);
+
+        // adjust the camera for this aspect
+        this.camera.aspect = aspect;
+        this.camera.updateProjectionMatrix();
+        this.cameraHelper.update();
+
+        // don't draw the camera helper in the original view
+        this.cameraHelper.visible = false;
+
+        this.scene.background = new THREE.Color(0x000000);
+
+        // render
+        this.renderer.render(this.scene, this.camera);
+      }
+
+      // render from the 2nd camera
+      {
+        const aspect = this.setScissorForElem(view2Elem);
+
+        // adjust camera for this aspect
+        camera2.aspect = aspect;
+        camera2.updateProjectionMatrix();
+
+        // draw cameraHelper in the 2nd view
+        this.cameraHelper.visible = true;
+
+        this.scene.background = new THREE.Color(0x000040);
+
+        this.renderer.render(this.scene, camera2);
+      }
+
+      controls.update();
+      controls2.update();
+
+
+      // this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(animate)
     }
     requestAnimationFrame(animate);
+  }
+
+  public setScissorForElem(elem) {
+    const canvasRect = this.renderer.domElement.getBoundingClientRect();
+    const elemRect = elem.getBoundingClientRect();
+
+    // Compute a canvas relative rectangle
+    const right = Math.min(elemRect.right, canvasRect.right) - canvasRect.left;
+    const left = Math.max(0, elemRect.left - canvasRect.left);
+    const bottom = Math.min(elemRect.bottom, canvasRect.bottom) - canvasRect.top;
+    const top = Math.min(0, elemRect.top - canvasRect.top);
+
+    const width = Math.min(canvasRect.width, right - left);
+    const height = Math.min(canvasRect.height, bottom - top);
+
+    // setup the scissor to only render to that part of the canvas
+    const positiveYUpBottom = canvasRect.height - bottom;
+    this.renderer.setScissor(left, positiveYUpBottom, width, height);
+    this.renderer.setViewport(left, positiveYUpBottom, width, height);
+
+    // return the aspect
+    return width / height;
   }
 }
